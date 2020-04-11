@@ -1,6 +1,6 @@
-package pl.edu.agh.torch.continous.model
+package pl.edu.agh.torch.continuous.model
 
-import pl.edu.agh.torch.continous.config.TorchContinuousConfig
+import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
 import pl.edu.agh.xinuk.model.Cell.SmellMap
 import pl.edu.agh.xinuk.model.{BufferCell, EmptyCell, GridPart, SmellingCell}
 

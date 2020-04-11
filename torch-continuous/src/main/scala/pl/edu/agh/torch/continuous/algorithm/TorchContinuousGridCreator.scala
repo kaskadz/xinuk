@@ -1,6 +1,6 @@
-package pl.edu.agh.torch.continous.algorithm
+package pl.edu.agh.torch.continuous.algorithm
 
-import pl.edu.agh.torch.continous.config.TorchContinuousConfig
+import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
 import pl.edu.agh.xinuk.algorithm.GridCreator
 import pl.edu.agh.xinuk.model.{Grid, NonPlanarConnections}
 

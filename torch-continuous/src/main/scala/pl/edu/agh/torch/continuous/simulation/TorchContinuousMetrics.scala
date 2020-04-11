@@ -1,4 +1,4 @@
-package pl.edu.agh.torch.continous.simulation
+package pl.edu.agh.torch.continuous.simulation
 
 import pl.edu.agh.xinuk.simulation.Metrics
 

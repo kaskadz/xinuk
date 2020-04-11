@@ -1,4 +1,4 @@
-package pl.edu.agh.torch.continous.config
+package pl.edu.agh.torch.continuous.config
 
 import pl.edu.agh.xinuk.config.{GuiType, XinukConfig}
 import pl.edu.agh.xinuk.model.Signal

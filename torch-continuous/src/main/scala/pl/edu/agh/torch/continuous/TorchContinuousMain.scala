@@ -1,11 +1,11 @@
-package pl.edu.agh.torch.continous
+package pl.edu.agh.torch.continuous
 
 import java.awt.Color
 
 import com.typesafe.scalalogging.LazyLogging
-import pl.edu.agh.torch.continous.algorithm.{TorchContinuousGridCreator, TorchContinuousMovesController}
-import pl.edu.agh.torch.continous.model.{EscapeCell, FireCell, HumanCell}
-import pl.edu.agh.torch.continous.model.parallel.TorchContinuousConflictResolver
+import pl.edu.agh.torch.continuous.algorithm.{TorchContinuousGridCreator, TorchContinuousMovesController}
+import pl.edu.agh.torch.continuous.model.{EscapeCell, FireCell, HumanCell}
+import pl.edu.agh.torch.continuous.model.parallel.TorchContinuousConflictResolver
 import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.{DefaultSmellPropagation, Obstacle, SmellingCell}
 

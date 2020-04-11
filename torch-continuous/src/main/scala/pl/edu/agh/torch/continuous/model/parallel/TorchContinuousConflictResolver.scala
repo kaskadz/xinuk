@@ -1,7 +1,7 @@
-package pl.edu.agh.torch.continous.model.parallel
+package pl.edu.agh.torch.continuous.model.parallel
 
-import pl.edu.agh.torch.continous.config.TorchContinuousConfig
-import pl.edu.agh.torch.continous.simulation.TorchContinuousMetrics
+import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
+import pl.edu.agh.torch.continuous.simulation.TorchContinuousMetrics
 import pl.edu.agh.xinuk.model.{Cell, EmptyCell, GridPart}
 import pl.edu.agh.xinuk.model.parallel.ConflictResolver
 import pl.edu.agh.xinuk.simulation.Metrics

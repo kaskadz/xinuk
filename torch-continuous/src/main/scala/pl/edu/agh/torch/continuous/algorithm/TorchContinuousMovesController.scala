@@ -1,7 +1,7 @@
-package pl.edu.agh.torch.continous.algorithm
+package pl.edu.agh.torch.continuous.algorithm
 
-import pl.edu.agh.torch.continous.config.TorchContinuousConfig
-import pl.edu.agh.torch.continous.simulation.TorchContinuousMetrics
+import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
+import pl.edu.agh.torch.continuous.simulation.TorchContinuousMetrics
 import pl.edu.agh.xinuk.algorithm.MovesController
 import pl.edu.agh.xinuk.model.EnhancedGrid
 import pl.edu.agh.xinuk.simulation.Metrics
