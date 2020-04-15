@@ -10,7 +10,7 @@ import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.{DefaultSmellPropagation, Obstacle, SmellingCell}
 
 object TorchContinuousMain extends LazyLogging {
-  private val configPrefix = "torch"
+  private val configPrefix = "torch-continuous"
   private val metricHeaders = Vector(
     "peopleCount",
     "fireCount",

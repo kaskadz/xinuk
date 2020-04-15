@@ -25,7 +25,7 @@ final case class TorchContinuousMetrics(peopleCount: Long,
         TorchContinuousMetrics(peopleCount + otherPeopleCount, fireCount + otherFireCount, escapeCount + otherEscapeCount,
           peopleDeaths + otherPeopleDeaths, peopleEscaped + otherPeopleEscaped)
       case null => this
-      case _ => throw new UnsupportedOperationException(s"Cannot add: non-TorchMetrics to TorchMetrics")
+      case _ => throw new UnsupportedOperationException(s"Cannot add: non-TorchContinuousMetrics to TorchContinuousMetrics")
     }
   }
 }
