@@ -16,6 +16,8 @@ final case class TorchContinuousConfig(
                                         signalSpeedRatio: Int,
                                         iterationsNumber: Long,
 
+                                        humanMaxSpeed: Int,
+                                        fireSpeadingFrequency: Int,
                                         spawnChance: Double,
                                         humanSpawnChance: Double,
                                         fireSpawnChance: Double,
