@@ -2,7 +2,7 @@ package pl.edu.agh.xinuk.model
 
 import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model.Cell.{SmellMap, SmellMapOps}
-import pl.edu.agh.xinuk.model.Direction.Direction
+import pl.edu.agh.xinuk.model.Direction.{Bottom, BottomLeft, BottomRight, Direction, Left, Right, Top, TopLeft, TopRight}
 
 class EnhancedGrid(private val cells: Array[Array[LocalEnhancedCell]],
                    private val remoteCells: collection.mutable.Map[(Int, Int), RemoteEnhancedCell],
@@ -24,6 +24,26 @@ class EnhancedGrid(private val cells: Array[Array[LocalEnhancedCell]],
     } else {
       remoteCells((x, y))
     }
+  }
+
+  def neighbourCellCoordinates(x: Int, y: Int): Vector[(Int, Int)] = {
+    val pos = Vector(-1, 0, 1)
+    pos.flatMap(i => pos.collect {
+      case j if !(i == 0 && j == 0) && isNeighbourInGridOrRemote(x, y, i, j) => (x + i, y + j)
+    })
+  }
+
+  def isNeighbourInGridOrRemote(x: Int, y: Int, i: Int, j: Int): Boolean = {
+    isInGridOrRemote(x + i, y + j)
+  }
+
+  def isInGridOrRemote(x: Int, y: Int): Boolean = {
+    areCoordsInGrid(x, y) || remoteCells.contains((x, y))
+  }
+
+  def neighbourCellDirections(x: Int, y: Int): Seq[Direction] = {
+    Seq(TopLeft, Top, TopRight, Left, Right, BottomLeft, Bottom, BottomRight)
+      .filter(dir => isInGridOrRemote(dir.of(x, y)._1, dir.of(x, y)._2))
   }
 
   def getLocalCellAt(x: Int, y: Int): LocalEnhancedCell = {

@@ -37,10 +37,32 @@ object TorchContinuousMain extends LazyLogging {
 
   private def cellToColor(cell: SmellingCell): Color = {
     cell match {
-      case HumanCell(_, _, _) => Color.BLUE
+      case HumanCell(_, _, _) => Color.WHITE
       case FireCell(_) => Color.ORANGE
       case EscapeCell(_) => new Color(139, 69, 19)
-      case _ => Color.WHITE
+      case cell: SmellingCell => cellToColorRegions(cell)
+    }
+  }
+
+  private def cellToColorRegions(cell: SmellingCell): Color = {
+    val smellValue = cell.smell.values.map(_.value).max.toFloat
+    val brightness = Math.pow(Math.abs(smellValue), 0.1).toFloat
+    if (smellValue < -0.001) {
+      val hue = 1f
+      val saturation = 1f
+      Color.getHSBColor(hue, saturation, brightness)
+    } else if (smellValue < 0.001) {
+      val hue = 0.65f
+      val saturation = 1f
+      Color.getHSBColor(hue, saturation, brightness)
+    } else if (smellValue < 0.1) {
+      val hue = 0.28f
+      val saturation = 1f
+      Color.getHSBColor(hue, saturation, brightness)
+    } else {
+      val hue = 0.11f
+      val saturation = 0.69f
+      Color.getHSBColor(hue, saturation, brightness)
     }
   }
 }

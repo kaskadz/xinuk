@@ -2,7 +2,7 @@ package pl.edu.agh.xinuk.model
 
 import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model.Cell.SmellMap
-import pl.edu.agh.xinuk.model.Direction.Direction
+import pl.edu.agh.xinuk.model.Direction.{Bottom, BottomLeft, BottomRight, Direction, Left, Right, Top, TopLeft, TopRight}
 import pl.edu.agh.xinuk.model.Grid.CellArray
 
 final case class Grid(cells: CellArray) extends AnyVal {
@@ -42,6 +42,7 @@ object Grid {
     })
   }
 
+  def neighbourCellDirections: Seq[Direction] = Seq(TopLeft, Top, TopRight, Left, Right, BottomLeft, Bottom, BottomRight)
 }
 
 final case class Signal(value: Double) extends AnyVal with Ordered[Signal] {
