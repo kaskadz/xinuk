@@ -37,10 +37,18 @@ object TorchContinuousMain extends LazyLogging {
 
   private def cellToColor(cell: SmellingCell): Color = {
     cell match {
-      case HumanCell(_, _, _) => Color.WHITE
+      case humanCell@HumanCell(_, _) => humanCellToColor(humanCell)
       case FireCell(_) => Color.ORANGE
       case EscapeCell(_) => new Color(139, 69, 19)
       case cell: SmellingCell => cellToColorRegions(cell)
+    }
+  }
+
+  private def humanCellToColor(cell: HumanCell): Color = {
+    if (cell.crowd.nonEmpty) {
+      Color.WHITE
+    } else {
+      cellToColorRegions(cell)
     }
   }
 

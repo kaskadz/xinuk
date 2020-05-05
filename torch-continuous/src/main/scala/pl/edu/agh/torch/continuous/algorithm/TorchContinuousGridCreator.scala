@@ -1,9 +1,9 @@
 package pl.edu.agh.torch.continuous.algorithm
 
 import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
-import pl.edu.agh.torch.continuous.model.{EscapeAccessible, FireAccessible, HumanAccessible}
+import pl.edu.agh.torch.continuous.model.{EscapeAccessible, FireAccessible, Human, HumanAccessible, HumanCell}
 import pl.edu.agh.xinuk.algorithm.GridCreator
-import pl.edu.agh.xinuk.model.{EmptyCell, Grid, NonPlanarConnections}
+import pl.edu.agh.xinuk.model.{Grid, NonPlanarConnections}
 
 import scala.util.Random
 
@@ -12,7 +12,7 @@ final class TorchContinuousGridCreator(implicit config: TorchContinuousConfig) e
   private val random = new Random(System.nanoTime())
 
   override def initialGrid: (Grid, NonPlanarConnections) = {
-    val grid = Grid.empty()
+    val grid = Grid.empty{ HumanCell.Instance }
 
     var humanCount = 0L
     var fireCount = 0L
@@ -28,22 +28,25 @@ final class TorchContinuousGridCreator(implicit config: TorchContinuousConfig) e
             case 0 =>
               if (random.nextDouble() < config.humanSpawnChance) {
                 humanCount += 1
-                val speed = random.nextInt(config.humanMaxSpeed) + 1
-                HumanAccessible.unapply(EmptyCell.Instance).withHuman(List.empty, speed)
+                val humanX = random.nextInt(config.cellSize)
+                val humanY = random.nextInt(config.cellSize)
+                val human = new Human(humanX, humanY)
+                println("Spawned human at " + x + " " + y)
+                HumanAccessible.unapply(HumanCell.Instance).withHuman(List(human))
               } else {
                 grid.cells(x)(y)
               }
             case 1 =>
               if (random.nextDouble() < config.escapeSpawnChance) {
                 escapesCount += 1
-                EscapeAccessible.unapply(EmptyCell.Instance).withEscape()
+                EscapeAccessible.unapply(HumanCell.Instance).withEscape()
               } else {
                 grid.cells(x)(y)
               }
             case 2 =>
               if (random.nextDouble() < config.fireSpawnChance) {
                 fireCount += 1
-                FireAccessible.unapply(EmptyCell.Instance).withFire()
+                FireAccessible.unapply(HumanCell.Instance).withFire()
               } else {
                 grid.cells(x)(y)
               }

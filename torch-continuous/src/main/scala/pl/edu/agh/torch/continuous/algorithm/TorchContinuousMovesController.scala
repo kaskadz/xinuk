@@ -2,12 +2,11 @@ package pl.edu.agh.torch.continuous.algorithm
 
 import com.avsystem.commons
 import com.avsystem.commons.SharedExtensions._
-import com.avsystem.commons.misc.Opt
 import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
 import pl.edu.agh.torch.continuous.model.{EscapeAccessible, EscapeCell, FireAccessible, FireCell, HumanAccessible, HumanCell}
 import pl.edu.agh.torch.continuous.simulation.TorchContinuousMetrics
 import pl.edu.agh.xinuk.algorithm.MovesController
-import pl.edu.agh.xinuk.model.{BufferCell, Direction, EmptyCell, EnhancedGrid, Grid, GridPart, Obstacle, Signal}
+import pl.edu.agh.xinuk.model.{BufferCell, EmptyCell, EnhancedGrid, GridPart, LocalEnhancedCell, Obstacle, Signal, SmellingCell}
 import pl.edu.agh.xinuk.simulation.Metrics
 
 import scala.util.Random
@@ -42,7 +41,7 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
   }
 
   override def makeMoves(iteration: Long, grid: EnhancedGrid): (EnhancedGrid, Metrics) = {
-    val newGrid = grid.emptyCopy()
+    val newGrid = grid.emptyCopy{ HumanCell.Instance }
 
     var humanCount = 0L
     var fireCount = 0L
@@ -53,6 +52,7 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
     def isEmptyIn(grid: EnhancedGrid)(i: Int, j: Int): Boolean = {
       grid.getCellAt(i, j).cell match {
         case EmptyCell(_) | BufferCell(EmptyCell(_)) => true
+        case humanCell@HumanCell(_, _) => humanCell.crowd.isEmpty
         case _ => false
       }
     }
@@ -70,8 +70,8 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
         val (newFireX, newFireY, newCell) = availableCells(random.nextInt(availableCells.size))
         newGrid.setCellAt(newFireX, newFireY, newCell)
         grid.getCellAt(newFireX, newFireY).cell match {
-          case HumanCell(_, _, _) =>
-            peopleDeaths += 1
+          case cell@HumanCell(_, _) =>
+            peopleDeaths += cell.crowd.size
           case _ =>
         }
       }
@@ -81,13 +81,13 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
       grid.getCellAt(x, y).cell match {
         case Obstacle =>
           newGrid.setCellAt(x, y, Obstacle)
-        case cell@(EmptyCell(_) | BufferCell(_)) =>
+        case cell@BufferCell(_) =>
           if (isEmptyIn(newGrid)(x, y)) {
             newGrid.setCellAt(x, y, cell)
           }
         case EscapeCell(_) =>
           if (isEmptyIn(newGrid)(x, y)) {
-            newGrid.setCellAt(x, y, EscapeAccessible.unapply(EmptyCell.Instance).withEscape())
+            newGrid.setCellAt(x, y, EscapeAccessible.unapply(HumanCell.Instance).withEscape())
           }
         case cell: FireCell =>
           if (iteration % config.fireSpeadingFrequency == 0) {
@@ -101,34 +101,26 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
         case cell: HumanCell =>
           newGrid.getCellAt(x, y).cell match {
             case FireCell(_) =>
-            case _ => if (iteration % cell.speed == 0) {
-              moveHuman(cell, x, y)
-            } else {
-              stayInPlace(cell, x, y)
-            }
+            case _ => newGrid.setCellAt(x, y, cell.copy()) // TODO
           }
       }
-    }
-
-    def stayInPlace(cell: HumanCell, x: Int, y: Int): Unit = {
-      newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd, cell.speed))
     }
 
     def moveHuman(cell: HumanCell, x: Int, y: Int): Unit = {
       val destinations = calculatePossibleDestinations(cell, x, y, grid)
       val destination = selectDestinationCell(destinations, newGrid)
-      if (cell.crowd.isEmpty) {
+      /*if (cell.crowd.isEmpty) {
         destination match {
           case Opt((i, j, HumanAccessible(destination))) =>
-            newGrid.setCellAt(i, j, destination.withHuman(cell.crowd, cell.speed))
+            newGrid.setCellAt(i, j, destination.withHuman(cell.crowd))
             newGrid.getCellAt(i, j).cell match {
-              case EscapeCell(_) => peopleEscaped += 1
+              case EscapeCell(_) => peopleEscaped += cell.crowd.size
               case _ =>
             }
           case Opt((i, j, inaccessibleDestination)) =>
             throw new RuntimeException(s"Human selected inaccessible destination ($i,$j): $inaccessibleDestination")
           case Opt.Empty =>
-            newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd, cell.speed))
+            newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd, cell))
         }
       } else {
         destination match {
@@ -138,9 +130,9 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
           case Opt((i, j, inaccessibleDestination)) =>
             throw new RuntimeException(s"Human selected inaccessible destination ($i,$j): $inaccessibleDestination")
           case Opt.Empty =>
-            newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd, cell.speed))
+            newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd))
         }
-      }
+      }*/
 
     }
 
@@ -149,8 +141,8 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
       y <- 0 until config.gridSize
     } {
       grid.getCellAt(x, y).cell match {
-        case HumanCell(_, crowd, _) =>
-          humanCount += 1 + crowd.size
+        case HumanCell(_, crowd) =>
+          humanCount += crowd.size
         case FireCell(_) =>
           fireCount += 1
         case EscapeCell(_) =>

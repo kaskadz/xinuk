@@ -24,5 +24,6 @@ final case class TorchContinuousConfig(
                                         escapeSpawnChance: Double,
                                         humanInitialSignal: Signal,
                                         fireInitialSignal: Signal,
-                                        escapeInitialSignal: Signal
+                                        escapeInitialSignal: Signal,
+                                        cellSize: Int
                                       ) extends XinukConfig

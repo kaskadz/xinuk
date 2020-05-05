@@ -2,7 +2,7 @@ package pl.edu.agh.torch.continuous.model
 
 import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
 import pl.edu.agh.xinuk.model.Cell.SmellMap
-import pl.edu.agh.xinuk.model.{BufferCell, EmptyCell, GridPart, SmellingCell}
+import pl.edu.agh.xinuk.model.{BufferCell, GridPart, SmellingCell}
 
 
 final case class FireCell(smell: SmellMap) extends SmellingCell {
@@ -16,12 +16,6 @@ trait FireAccessible[+T <: GridPart] {
 }
 
 object FireAccessible {
-
-  def unapply(arg: EmptyCell)(implicit config: TorchContinuousConfig): FireAccessible[FireCell] =
-    new FireAccessible[FireCell] {
-      override def withFire(): FireCell = FireCell(arg.smellWith(config.fireInitialSignal))
-    }
-
   def unapply(arg: HumanCell)(implicit config: TorchContinuousConfig): FireAccessible[FireCell] =
     new FireAccessible[FireCell] {
       override def withFire(): FireCell = FireCell(arg.smellWith(config.fireInitialSignal))
@@ -38,7 +32,6 @@ object FireAccessible {
     }
 
   def unapply(arg: GridPart)(implicit config: TorchContinuousConfig): Option[FireAccessible[GridPart]] = arg match {
-    case cell: EmptyCell => Some(unapply(cell))
     case cell: EscapeCell => Some(unapply(cell))
     case cell: BufferCell => Some(unapply(cell))
     case cell: HumanCell => Some(unapply(cell))
