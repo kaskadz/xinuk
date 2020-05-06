@@ -30,8 +30,8 @@ final class TorchContinuousGridCreator(implicit config: TorchContinuousConfig) e
                 humanCount += 1
                 val humanX = random.nextInt(config.cellSize)
                 val humanY = random.nextInt(config.cellSize)
-                val human = new Human(humanX, humanY)
-                println("Spawned human at " + x + " " + y)
+                val humanSpeed = random.nextInt(config.humanMaxSpeed - config.humanMinSpeed) + config.humanMinSpeed
+                val human = new Human(humanX, humanY, humanSpeed)
                 HumanAccessible.unapply(HumanCell.Instance).withHuman(List(human))
               } else {
                 grid.cells(x)(y)

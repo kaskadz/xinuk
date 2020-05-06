@@ -3,10 +3,11 @@ package pl.edu.agh.torch.continuous.algorithm
 import com.avsystem.commons
 import com.avsystem.commons.SharedExtensions._
 import pl.edu.agh.torch.continuous.config.TorchContinuousConfig
-import pl.edu.agh.torch.continuous.model.{EscapeAccessible, EscapeCell, FireAccessible, FireCell, HumanAccessible, HumanCell}
+import pl.edu.agh.torch.continuous.model.{EscapeAccessible, EscapeCell, FireAccessible, FireCell, Human, HumanAccessible, HumanCell}
 import pl.edu.agh.torch.continuous.simulation.TorchContinuousMetrics
 import pl.edu.agh.xinuk.algorithm.MovesController
-import pl.edu.agh.xinuk.model.{BufferCell, EmptyCell, EnhancedGrid, GridPart, LocalEnhancedCell, Obstacle, Signal, SmellingCell}
+import pl.edu.agh.xinuk.model.Direction.Direction
+import pl.edu.agh.xinuk.model.{BufferCell, Direction, EmptyCell, EnhancedGrid, GridPart, LocalEnhancedCell, Obstacle, Signal, SmellingCell}
 import pl.edu.agh.xinuk.simulation.Metrics
 
 import scala.util.Random
@@ -101,14 +102,55 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
         case cell: HumanCell =>
           newGrid.getCellAt(x, y).cell match {
             case FireCell(_) =>
-            case _ => newGrid.setCellAt(x, y, cell.copy()) // TODO
+            case _ => moveHuman(cell, x, y)
           }
       }
     }
 
+    def calculateDirectionVec(cell: HumanCell, x: Int, y: Int, grid: EnhancedGrid): (Signal, Signal) = {
+      grid.neighbourCellDirections(x, y)
+        .map(dir => toSmellVec(cell, dir))
+        .reduce((dest, cur) => (dest._1 + cur._1, dest._2 + cur._2))
+    }
+
+    def toSmellVec(cell: HumanCell, direction: Direction): (Signal, Signal) = {
+      val smellValue = cell.smell(direction)
+      (smellValue * direction.xShift, smellValue * direction.yShift)
+    }
+
     def moveHuman(cell: HumanCell, x: Int, y: Int): Unit = {
-      val destinations = calculatePossibleDestinations(cell, x, y, grid)
-      val destination = selectDestinationCell(destinations, newGrid)
+      val destinationVec = calculateDirectionVec(cell, x, y, grid)
+
+      val humansStayingInCellAfterMove = cell.crowd
+        .filter(human => human.willStayInSameCellAfterMove(destinationVec))
+      val humansPassingToAnotherCellAfterMove = cell.crowd
+        .filter(human => !human.willStayInSameCellAfterMove(destinationVec))
+      val humansArrivedAtCellInThisIteration = newGrid.getCellAt(x, y).cell match {
+        case humanCell@HumanCell(_, _) => humanCell.crowd
+        case _ => List.empty
+      }
+
+      humansStayingInCellAfterMove.foreach(human => human.move(destinationVec))
+      newGrid.setCellAt(x, y, cell.copy(smell = cell.smell, crowd = humansStayingInCellAfterMove ++ humansArrivedAtCellInThisIteration))
+
+      humansPassingToAnotherCellAfterMove.foreach(human => moveHumanToAnotherCell(human, x, y, destinationVec))
+    }
+
+    def moveHumanToAnotherCell(human: Human, x: Int, y: Int, destinationVec: (Signal, Signal)) = {
+      val direction = human.getDestinationDirection(destinationVec)
+      val (i, j) = direction.of(x, y)
+      val destinationCell = newGrid.getCellAt(i, j).cell
+      destinationCell match {
+        case humanCell@HumanCell(_, _) => {
+          human.move(destinationVec)
+          newGrid.setCellAt(i, j, humanCell.copy(smell = humanCell.smell, crowd = humanCell.crowd ++ List(human)))
+        }
+        case EscapeCell(_) => peopleEscaped += 1
+      }
+    }
+
+      /*val destinations = calculatePossibleDestinations(cell, x, y, grid)
+      val destination = selectDestinationCell(destinations, newGrid)*/
       /*if (cell.crowd.isEmpty) {
         destination match {
           case Opt((i, j, HumanAccessible(destination))) =>
@@ -133,8 +175,6 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
             newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd))
         }
       }*/
-
-    }
 
     for {
       x <- 0 until config.gridSize

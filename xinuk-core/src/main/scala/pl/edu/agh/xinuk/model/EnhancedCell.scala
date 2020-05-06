@@ -51,7 +51,7 @@ object RemoteEnhancedCell {
 
 
 object Direction {
-  sealed abstract class Direction(private val xShift: Int, private val yShift: Int) {
+  sealed abstract class Direction(val xShift: Int, val yShift: Int) {
     def of(x: Int, y: Int): (Int, Int) = (x + xShift, y + yShift)
     def opposite: Direction = Direction.opposite(this)
     def adjacent: Set[Direction] = Direction.adjacent(this)
