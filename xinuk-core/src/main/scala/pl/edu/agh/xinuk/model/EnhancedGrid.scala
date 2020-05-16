@@ -37,6 +37,10 @@ class EnhancedGrid(private val cells: Array[Array[LocalEnhancedCell]],
     isInGridOrRemote(x + i, y + j)
   }
 
+  def isInGrid(x: Int, y: Int): Boolean = {
+    areCoordsInGrid(x, y)
+  }
+
   def isInGridOrRemote(x: Int, y: Int): Boolean = {
     areCoordsInGrid(x, y) || remoteCells.contains((x, y))
   }

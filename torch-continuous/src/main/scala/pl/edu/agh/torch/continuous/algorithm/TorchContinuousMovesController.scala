@@ -58,6 +58,13 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
       }
     }
 
+    def hasHumansIn(grid: EnhancedGrid)(i: Int, j: Int): Boolean = {
+      grid.getCellAt(i, j).cell match {
+        case humanCell@HumanCell(_, _) => humanCell.crowd.nonEmpty
+        case _ => false
+      }
+    }
+
     def reproduce(x: Int, y: Int)(creator: PartialFunction[GridPart, GridPart]): Unit = {
       val availableCells =
         grid.neighbourCellCoordinates(x, y).flatMap {
@@ -88,6 +95,14 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
           }
         case EscapeCell(_) =>
           if (isEmptyIn(newGrid)(x, y)) {
+            newGrid.setCellAt(x, y, EscapeAccessible.unapply(HumanCell.Instance).withEscape())
+          } else if (hasHumansIn(newGrid)(x, y)) {
+            newGrid.getCellAt(x, y).cell match {
+              case humanCell@HumanCell(_, _) => {
+                println("Someone escaped!")
+                peopleEscaped = peopleEscaped + humanCell.crowd.size
+              }
+            }
             newGrid.setCellAt(x, y, EscapeAccessible.unapply(HumanCell.Instance).withEscape())
           }
         case cell: FireCell =>
@@ -145,7 +160,13 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
           human.move(destinationVec)
           newGrid.setCellAt(i, j, humanCell.copy(smell = humanCell.smell, crowd = humanCell.crowd ++ List(human)))
         }
-        case EscapeCell(_) => peopleEscaped += 1
+        case EscapeCell(_) => {
+          println("Someone escaped!")
+          peopleEscaped += 1
+        }
+        case FireCell(_) => {
+          peopleDeaths += 1
+        }
       }
     }
 
