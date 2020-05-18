@@ -22,6 +22,43 @@ class Human(var x: Double, var y: Double, val speed: Double)(implicit config: To
     y = move(y, direction._2.value * speed)
   }
 
+  def moveConstrained(direction: (Signal, Signal), constrainedDirection: Direction): Unit = {
+    val (left, right) = constrainedDirection.xShift match {
+      case -1 => (true, false)
+      case 1 => (false, true)
+      case _ => (false, false)
+    }
+
+    val (down, up) = constrainedDirection.yShift match {
+      case -1 => (true, false)
+      case 1 => (false, true)
+      case _ => (false, false)
+    }
+
+    x = moveWithConstrains(x, direction._1.value * speed, left, right)
+    x = moveWithConstrains(y, direction._2.value * speed, down, up)
+  }
+
+  private def moveWithConstrains(
+                                       axis: Double, value: Double,
+                                       beginConstraint: Boolean, endConstraint: Boolean): Double = {
+    if (axis + value < 0) {
+      if (beginConstraint) {
+        0.0
+      } else {
+        config.cellSize - (axis + value) % config.cellSize
+      }
+    } else if ((axis + value) > config.cellSize) {
+      if (endConstraint) {
+        config.cellSize
+      } else {
+        (axis + value) % config.cellSize
+      }
+    } else {
+      axis + value
+    }
+  }
+
   private def move(axis: Double, value: Double): Double = {
     if (axis + value < 0) {
       config.cellSize - (axis + value) % config.cellSize
@@ -31,17 +68,15 @@ class Human(var x: Double, var y: Double, val speed: Double)(implicit config: To
   }
 
   def willStayInSameCellAfterMove(direction: (Signal, Signal)): Boolean = {
-    val newX = x + direction._1.value * speed
-    val newY = y + direction._2.value * speed
-    newX >= 0 && newX < config.cellSize && newY >= 0 && newY < config.cellSize
+    getDestinationDirection(direction).isEmpty
   }
 
-  def getDestinationDirection(direction: (Signal, Signal)): Direction = {
+  def getDestinationDirection(direction: (Signal, Signal)): Option[Direction] = {
     val newX = x + direction._1.value * speed
     val newY = y + direction._2.value * speed
     val dirX = getDestinationDirection(newX)
     val dirY = getDestinationDirection(newY)
-    Direction.values.filter(dir => dir.xShift == dirX && dir.yShift == dirY).head
+    Direction.values.find(dir => dir.xShift == dirX && dir.yShift == dirY)
   }
 
   private def getDestinationDirection(newCoordinate: Double): Int = {

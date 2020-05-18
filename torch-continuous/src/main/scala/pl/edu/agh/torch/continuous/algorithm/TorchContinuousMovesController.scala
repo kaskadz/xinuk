@@ -42,7 +42,9 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
   }
 
   override def makeMoves(iteration: Long, grid: EnhancedGrid): (EnhancedGrid, Metrics) = {
-    val newGrid = grid.emptyCopy{ HumanCell.Instance }
+    val newGrid = grid.emptyCopy {
+      HumanCell.Instance
+    }
 
     var humanCount = 0L
     var fireCount = 0L
@@ -138,21 +140,38 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
 
       val humansStayingInCellAfterMove = cell.crowd
         .filter(human => human.willStayInSameCellAfterMove(destinationVec))
-      val humansPassingToAnotherCellAfterMove = cell.crowd
-        .filter(human => !human.willStayInSameCellAfterMove(destinationVec))
+
+      val (humansAbleToMoveToAnotherCell, humansNotAbleToMoveToAnotherCell) = cell.crowd
+        .map(human => (human, human.getDestinationDirection(destinationVec)))
+        .filter { case (_, destinationDirection) => destinationDirection.isDefined }
+        .collect { case (human, Some(destinationDirectionValue)) => (human, destinationDirectionValue) }
+        .partition { case (_, destinationDirectionValue) =>
+          val (i, j) = destinationDirectionValue.of(x, y)
+          newGrid.isInGridOrRemote(i, j)
+        }
+
       val humansArrivedAtCellInThisIteration = newGrid.getCellAt(x, y).cell match {
         case humanCell@HumanCell(_, _) => humanCell.crowd
         case _ => List.empty
       }
 
-      humansStayingInCellAfterMove.foreach(human => human.move(destinationVec))
-      newGrid.setCellAt(x, y, cell.copy(smell = cell.smell, crowd = humansStayingInCellAfterMove ++ humansArrivedAtCellInThisIteration))
+      humansStayingInCellAfterMove
+        .foreach(human => human.move(destinationVec))
+      humansNotAbleToMoveToAnotherCell
+        .foreach { case (human, destinationDirection) => human.moveConstrained(destinationVec, destinationDirection) }
 
-      humansPassingToAnotherCellAfterMove.foreach(human => moveHumanToAnotherCell(human, x, y, destinationVec))
+      humansAbleToMoveToAnotherCell
+        .foreach { case (human, _) => moveHumanToAnotherCell(human, x, y, destinationVec) }
+      newGrid.setCellAt(x, y,
+        cell.copy(
+          smell = cell.smell,
+          crowd = humansNotAbleToMoveToAnotherCell.map { case (human, _) => human }
+            ++ humansStayingInCellAfterMove
+            ++ humansArrivedAtCellInThisIteration))
     }
 
-    def moveHumanToAnotherCell(human: Human, x: Int, y: Int, destinationVec: (Signal, Signal)) = {
-      val direction = human.getDestinationDirection(destinationVec)
+    def moveHumanToAnotherCell(human: Human, x: Int, y: Int, destinationVec: (Signal, Signal)): Unit = {
+      val direction = human.getDestinationDirection(destinationVec).get
       val (i, j) = direction.of(x, y)
       val destinationCell = newGrid.getCellAt(i, j).cell
       destinationCell match {
@@ -170,32 +189,32 @@ final class TorchContinuousMovesController(implicit config: TorchContinuousConfi
       }
     }
 
-      /*val destinations = calculatePossibleDestinations(cell, x, y, grid)
-      val destination = selectDestinationCell(destinations, newGrid)*/
-      /*if (cell.crowd.isEmpty) {
-        destination match {
-          case Opt((i, j, HumanAccessible(destination))) =>
-            newGrid.setCellAt(i, j, destination.withHuman(cell.crowd))
-            newGrid.getCellAt(i, j).cell match {
-              case EscapeCell(_) => peopleEscaped += cell.crowd.size
-              case _ =>
-            }
-          case Opt((i, j, inaccessibleDestination)) =>
-            throw new RuntimeException(s"Human selected inaccessible destination ($i,$j): $inaccessibleDestination")
-          case Opt.Empty =>
-            newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd, cell))
-        }
-      } else {
-        destination match {
-          case Opt((i, j, HumanAccessible(destination))) =>
-            newGrid.setCellAt(i, j, destination.withHuman(cell.crowd.head.crowd, cell.crowd.head.speed))
-            newGrid.setCellAt(x, y, cell.copy(cell.smellWithout(cell.crowd.head.smell), cell.crowd.drop(1), cell.speed))
-          case Opt((i, j, inaccessibleDestination)) =>
-            throw new RuntimeException(s"Human selected inaccessible destination ($i,$j): $inaccessibleDestination")
-          case Opt.Empty =>
-            newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd))
-        }
-      }*/
+    /*val destinations = calculatePossibleDestinations(cell, x, y, grid)
+    val destination = selectDestinationCell(destinations, newGrid)*/
+    /*if (cell.crowd.isEmpty) {
+      destination match {
+        case Opt((i, j, HumanAccessible(destination))) =>
+          newGrid.setCellAt(i, j, destination.withHuman(cell.crowd))
+          newGrid.getCellAt(i, j).cell match {
+            case EscapeCell(_) => peopleEscaped += cell.crowd.size
+            case _ =>
+          }
+        case Opt((i, j, inaccessibleDestination)) =>
+          throw new RuntimeException(s"Human selected inaccessible destination ($i,$j): $inaccessibleDestination")
+        case Opt.Empty =>
+          newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd, cell))
+      }
+    } else {
+      destination match {
+        case Opt((i, j, HumanAccessible(destination))) =>
+          newGrid.setCellAt(i, j, destination.withHuman(cell.crowd.head.crowd, cell.crowd.head.speed))
+          newGrid.setCellAt(x, y, cell.copy(cell.smellWithout(cell.crowd.head.smell), cell.crowd.drop(1), cell.speed))
+        case Opt((i, j, inaccessibleDestination)) =>
+          throw new RuntimeException(s"Human selected inaccessible destination ($i,$j): $inaccessibleDestination")
+        case Opt.Empty =>
+          newGrid.setCellAt(x, y, cell.copy(cell.smell, cell.crowd))
+      }
+    }*/
 
     for {
       x <- 0 until config.gridSize
